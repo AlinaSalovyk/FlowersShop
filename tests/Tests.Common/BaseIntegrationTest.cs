@@ -1,0 +1,41 @@
+using System.Net.Http.Headers;
+using Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+
+namespace Tests.Common;
+
+public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebFactory>, IDisposable
+{
+    protected readonly ApplicationDbContext Context;
+    protected readonly HttpClient Client;
+    private readonly IServiceScope _scope;
+
+    protected BaseIntegrationTest(IntegrationTestWebFactory factory)
+    {
+        _scope = factory.Services.CreateScope();
+
+        Context = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Client = factory.WithWebHostBuilderMock()
+            .CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme: "TestScheme");
+    }
+
+    protected async Task SaveChangesAsync()
+    {
+        await Context.SaveChangesAsync();
+        Context.ChangeTracker.Clear();
+    }
+
+    public void Dispose()
+    {
+        Context.ChangeTracker.Clear();
+        _scope?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+}

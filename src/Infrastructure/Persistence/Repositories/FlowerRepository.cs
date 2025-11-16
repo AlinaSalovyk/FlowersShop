@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces.Queries;
 using Application.Common.Interfaces.Repositories;
+using Domain.Categories;
 using Domain.Flowers;
 using LanguageExt;
 using Microsoft.EntityFrameworkCore;
@@ -70,11 +71,13 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
 
     public async Task<IReadOnlyList<Flower>> GetByCategoryIdAsync(Guid categoryId, CancellationToken cancellationToken)
     {
+        var typedCategoryId = new CategoryId(categoryId);
+
         return await _context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
             .Include(x => x.Images)
-            .Where(x => x.Categories!.Any(c => c.CategoryId.Value == categoryId))
+            .Where(x => x.Categories!.Any(c => c.CategoryId == typedCategoryId))
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
