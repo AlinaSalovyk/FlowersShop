@@ -23,7 +23,7 @@ if (app.Environment.IsDevelopment())
         options.DocumentTitle = "Flowers Shop API Documentation";
     });
 }
-
+app.UseMiddleware<ErrorHandlingMiddleware>();
 await app.InitialiseDatabaseAsync();
 
 app.UseCors();
