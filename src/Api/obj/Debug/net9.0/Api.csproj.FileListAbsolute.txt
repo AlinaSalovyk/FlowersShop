@@ -149,3 +149,4 @@ D:\Api\FlowersShop\src\Api\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces
 D:\Api\FlowersShop\src\Api\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\Api\FlowersShop\src\Api\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\Api\FlowersShop\src\Api\bin\Debug\net9.0\Api.staticwebassets.runtime.json
+D:\Api\FlowersShop\src\Api\obj\Debug\net9.0\Api.sourcelink.json

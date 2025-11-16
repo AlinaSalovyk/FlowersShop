@@ -20,6 +20,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
         var entity = await _context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
+            .Include(x => x.Images)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id.Equals(id), cancellationToken);
 
@@ -29,6 +30,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
     public async Task<Option<Flower>> GetByNameAsync(string name, CancellationToken cancellationToken)
     {
         var entity = await _context.Flowers
+            .Include(x => x.Images)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Name == name, cancellationToken);
 
@@ -61,6 +63,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
         return await _context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
+            .Include(x => x.Images)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -70,6 +73,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
         return await _context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
+            .Include(x => x.Images)
             .Where(x => x.Categories!.Any(c => c.CategoryId.Value == categoryId))
             .AsNoTracking()
             .ToListAsync(cancellationToken);

@@ -2,12 +2,16 @@
 
 namespace Application.Flowers.Commands;
 
-public class UploadFlowerImageCommandValidator : AbstractValidator<UploadFlowerImageCommand>
+public class UploadFlowerImagesCommandValidator : AbstractValidator<UploadFlowerImagesCommand>
 {
-    public UploadFlowerImageCommandValidator()
+    public UploadFlowerImagesCommandValidator()
     {
         RuleFor(x => x.FlowerId).NotEmpty();
-        RuleFor(x => x.OriginalName).NotEmpty();
-        RuleFor(x => x.FileStream).NotNull();
+        RuleFor(x => x.Images).NotEmpty();
+        RuleForEach(x => x.Images).ChildRules(image =>
+        {
+            image.RuleFor(x => x.OriginalName).NotEmpty();
+            image.RuleFor(x => x.FileStream).NotNull();
+        });
     }
 }

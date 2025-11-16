@@ -17,5 +17,8 @@ public class FlowerNotFoundException(FlowerId flowerId)
 public class FlowerCategoriesNotFoundException(FlowerId flowerId) 
     : FlowerException(flowerId, $"One or more categories not found for flower {flowerId}");
 
+public class FlowerImageNotFoundException(FlowerId flowerId, FlowerImageId imageId)
+    : FlowerException(flowerId, $"Image {imageId} not found for flower {flowerId}");
+
 public class UnhandledFlowerException(FlowerId flowerId, Exception? innerException = null)
     : FlowerException(flowerId, "Unexpected error occurred", innerException);

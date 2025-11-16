@@ -7,21 +7,26 @@ using MediatR;
 
 namespace Application.Flowers.Commands;
 
-public record UploadFlowerImageCommand : IRequest<Either<FlowerException, Flower>>
+public record UploadFlowerImagesCommand : IRequest<Either<FlowerException, Flower>>
 {
     public required Guid FlowerId { get; init; }
+    public required IReadOnlyList<ImageFileDto> Images { get; init; }
+}
+
+public record ImageFileDto
+{
     public required string OriginalName { get; init; }
     public required Stream FileStream { get; init; }
 }
 
-public class UploadFlowerImageCommandHandler(
+public class UploadFlowerImagesCommandHandler(
     IFlowerRepository flowerRepository,
     IFlowerImageRepository flowerImageRepository,
     IFileStorage fileStorage)
-    : IRequestHandler<UploadFlowerImageCommand, Either<FlowerException, Flower>>
+    : IRequestHandler<UploadFlowerImagesCommand, Either<FlowerException, Flower>>
 {
     public async Task<Either<FlowerException, Flower>> Handle(
-        UploadFlowerImageCommand request,
+        UploadFlowerImagesCommand request,
         CancellationToken cancellationToken)
     {
         var flowerId = new FlowerId(request.FlowerId);
@@ -32,9 +37,17 @@ public class UploadFlowerImageCommandHandler(
             {
                 try
                 {
-                    var image = FlowerImage.New(flower.Id, request.OriginalName);
-                    await flowerImageRepository.AddAsync(image, cancellationToken);
-                    await fileStorage.UploadAsync(request.FileStream, image.GetFilePath(), cancellationToken);
+                    var images = new List<FlowerImage>();
+                    
+                    foreach (var imageDto in request.Images)
+                    {
+                        var image = FlowerImage.New(flower.Id, imageDto.OriginalName);
+                        images.Add(image);
+                        await fileStorage.UploadAsync(imageDto.FileStream, image.GetFilePath(), cancellationToken);
+                    }
+                    
+                    await flowerImageRepository.AddRangeAsync(images, cancellationToken);
+                    
                     return (Either<FlowerException, Flower>)flower;
                 }
                 catch (Exception exception)

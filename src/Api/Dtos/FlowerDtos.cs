@@ -10,7 +10,8 @@ public record FlowerDto(
     int StockQuantity,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
-    IReadOnlyList<CategoryFlowerDto>? Categories)
+    IReadOnlyList<CategoryFlowerDto>? Categories,
+    IReadOnlyList<FlowerImageDto>? Images)
 {
     public static FlowerDto FromDomainModel(Flower flower)
         => new(
@@ -23,7 +24,22 @@ public record FlowerDto(
             flower.UpdatedAt,
             flower.Categories != null
                 ? flower.Categories.Select(CategoryFlowerDto.FromDomainModel).ToList()
+                : [],
+            flower.Images != null
+                ? flower.Images.Select(FlowerImageDto.FromDomainModel).ToList()
                 : []);
+}
+
+public record FlowerImageDto(
+    Guid Id,
+    string OriginalName,
+    string FilePath)
+{
+    public static FlowerImageDto FromDomainModel(FlowerImage image)
+        => new(
+            image.Id.Value,
+            image.OriginalName,
+            image.GetFilePath());
 }
 
 public record CreateFlowerDto(

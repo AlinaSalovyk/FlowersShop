@@ -61,4 +61,14 @@ public class Flower
         StockQuantity -= quantity;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void RemoveImage(FlowerImageId imageId)
+    {
+        var image = Images?.FirstOrDefault(x => x.Id == imageId);
+        if (image != null)
+        {
+            Images?.Remove(image);
+            UpdatedAt = DateTime.UtcNow;
+        }
+    }
 }

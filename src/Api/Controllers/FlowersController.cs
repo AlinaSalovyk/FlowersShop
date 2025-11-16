@@ -86,16 +86,45 @@ public class FlowersController(
     }
 
     [HttpPost("{flowerId:guid}/images")]
-    public async Task<ActionResult<FlowerDto>> UploadImage(
+    public async Task<ActionResult<FlowerDto>> UploadImages(
         [FromRoute] Guid flowerId,
-        IFormFile file,
+        [FromForm] IFormFileCollection files,
         CancellationToken cancellationToken)
     {
-        var command = new UploadFlowerImageCommand
+        if (files == null || files.Count == 0)
         {
-            FlowerId = flowerId,
+            return BadRequest("No files provided");
+        }
+
+        var imageDtos = files.Select(file => new ImageFileDto
+        {
             OriginalName = file.FileName,
             FileStream = file.OpenReadStream()
+        }).ToList();
+
+        var command = new UploadFlowerImagesCommand
+        {
+            FlowerId = flowerId,
+            Images = imageDtos
+        };
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.Match<ActionResult<FlowerDto>>(
+            f => FlowerDto.FromDomainModel(f),
+            e => e.ToObjectResult());
+    }
+
+    [HttpDelete("{flowerId:guid}/images/{imageId:guid}")]
+    public async Task<ActionResult<FlowerDto>> DeleteImage(
+        [FromRoute] Guid flowerId,
+        [FromRoute] Guid imageId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteFlowerImageCommand
+        {
+            FlowerId = flowerId,
+            ImageId = imageId
         };
 
         var result = await sender.Send(command, cancellationToken);

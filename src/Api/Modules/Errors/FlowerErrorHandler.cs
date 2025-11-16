@@ -14,6 +14,7 @@ public static class FlowerErrorHandler
                 FlowerAlreadyExistException => StatusCodes.Status409Conflict,
                 FlowerNotFoundException => StatusCodes.Status404NotFound,
                 FlowerCategoriesNotFoundException => StatusCodes.Status404NotFound,
+                FlowerImageNotFoundException => StatusCodes.Status404NotFound,
                 UnhandledFlowerException => StatusCodes.Status500InternalServerError,
                 _ => StatusCodes.Status500InternalServerError
             }

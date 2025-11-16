@@ -9,7 +9,91 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2a097ffa-cfca-4f45-a036-ea8182a3a889" name="Changes" comment="" />
+    <list default="true" id="2a097ffa-cfca-4f45-a036-ea8182a3a889" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerImageCommand.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerImageCommandValidator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.FlowersShop/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.FlowersShop/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FlowersShop.sln" beforeDir="false" afterPath="$PROJECT_DIR$/FlowersShop.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/Controllers/FlowersController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/Controllers/FlowersController.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/Dtos/FlowerDtos.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/Dtos/FlowerDtos.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/Modules/Errors/FlowerErrorHandler.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/Modules/Errors/FlowerErrorHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.exe" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.staticwebassets.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.staticwebassets.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.staticwebassets.runtime.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Api.staticwebassets.runtime.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Application.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Domain.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Domain.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Infrastructure.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/bin/Debug/net9.0/Infrastructure.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.csproj.AssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/Api.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/apphost.exe" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/apphost.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/ref/Api.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/ref/Api.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/refint/Api.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/refint/Api.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjimswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjimswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjsmcshtml.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rjsmrazor.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rpswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/rpswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.json.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.build.json.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.development.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/Debug/net9.0/staticwebassets.development.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/Api/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Api/wwwroot/uploads/e343c862-142d-458d-84a9-394b10457447/df5a183a-798e-4aec-8729-614aa99758cd.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/Common/Interfaces/Repositories/IFlowerImageRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/Common/Interfaces/Repositories/IFlowerImageRepository.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/Flowers/Commands/UploadFlowerImageCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/Flowers/Commands/UploadFlowerImageCommand.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/Flowers/Commands/UploadFlowerImageCommandValidator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/Flowers/Commands/UploadFlowerImageCommandValidator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/Flowers/Exceptions/FlowerExceptions.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/Flowers/Exceptions/FlowerExceptions.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Application.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Domain.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/bin/Debug/net9.0/Domain.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.AssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.CoreCompileInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.CoreCompileInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/Application.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/ref/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/ref/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/refint/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/Debug/net9.0/refint/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Application/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/Application/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/Flowers/Flower.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/Flowers/Flower.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/bin/Debug/net9.0/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/bin/Debug/net9.0/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/bin/Debug/net9.0/Domain.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/bin/Debug/net9.0/Domain.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/Domain.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/ref/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/ref/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/refint/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/Debug/net9.0/refint/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Domain/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/Domain/obj/rider.project.model.nuget.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/FlowerImageRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/FlowerImageRepository.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/FlowerRepository.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/FlowerRepository.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Application.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Application.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Application.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Application.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Domain.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Domain.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Domain.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Domain.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Infrastructure.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/bin/Debug/net9.0/Infrastructure.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.csproj.AssemblyReference.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/Infrastructure.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/ref/Infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/ref/Infrastructure.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/refint/Infrastructure.dll" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/Debug/net9.0/refint/Infrastructure.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Infrastructure/obj/rider.project.model.nuget.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/Infrastructure/obj/rider.project.model.nuget.info" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,6 +105,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;AlinaSalovyk&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/AlinaSalovyk/FlowersShop.git&quot;,
+    &quot;accountId&quot;: &quot;d9faaf51-e9ca-434b-93cb-335fb792ddb0&quot;
+  }
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/src/Api/Controllers/CategoriesController.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Api/Controllers/CustomersController.cs" root0="FORCE_HIGHLIGHTING" />
@@ -78,6 +174,8 @@
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/CreateFlowerCommandValidator.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerCommand.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerCommandValidator.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerImageCommand.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/DeleteFlowerImageCommandValidator.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/UpdateFlowerCommand.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/UpdateFlowerCommandValidator.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Flowers/Commands/UploadFlowerImageCommand.cs" root0="FORCE_HIGHLIGHTING" />
@@ -126,9 +224,10 @@
     <setting file="file://$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/FlowerRepository.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Infrastructure/Persistence/Repositories/OrderRepository.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 3
-}]]></component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="35Wd5TvTWdEBPyYB2n42SPhfAyD" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -141,6 +240,8 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -151,6 +252,9 @@
   "keyToStringList": {
     "DatabaseDriversLRU": [
       "postgresql"
+    ],
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "GitIgnore"
     ]
   }
 }]]></component>
@@ -218,13 +322,15 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1763229577651</updated>
-      <workItem from="1763229578728" duration="6145000" />
+      <workItem from="1763229578728" duration="6204000" />
+      <workItem from="1763279697790" duration="3007000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
