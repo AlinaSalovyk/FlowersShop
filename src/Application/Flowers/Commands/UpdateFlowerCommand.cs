@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces.Repositories;
+﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces.Repositories;
 using Application.Flowers.Exceptions;
 using Domain.Categories;
 using Domain.Flowers;
@@ -20,7 +21,8 @@ public record UpdateFlowerCommand : IRequest<Either<FlowerException, Flower>>
 public class UpdateFlowerCommandHandler(
     IFlowerRepository flowerRepository,
     ICategoryRepository categoryRepository,
-    ICategoryFlowerRepository categoryFlowerRepository)
+    ICategoryFlowerRepository categoryFlowerRepository,
+    IApplicationDbContext dbContext) 
     : IRequestHandler<UpdateFlowerCommand, Either<FlowerException, Flower>>
 {
     public async Task<Either<FlowerException, Flower>> Handle(
@@ -41,6 +43,8 @@ public class UpdateFlowerCommandHandler(
         UpdateFlowerCommand request,
         CancellationToken cancellationToken)
     {
+        using var transaction = await dbContext.BeginTransactionAsync(cancellationToken);
+
         try
         {
             var categoryIds = request.Categories.Select(x => new CategoryId(x)).ToList();
@@ -50,19 +54,22 @@ public class UpdateFlowerCommandHandler(
             {
                 return new FlowerCategoriesNotFoundException(flower.Id);
             }
-
+            
             flower.UpdateDetails(request.Name, request.Description, request.Price, request.StockQuantity);
+
 
             var existingCategories = await categoryFlowerRepository.GetByFlowerIdAsync(flower.Id, cancellationToken);
             await categoryFlowerRepository.RemoveRangeAsync(existingCategories, cancellationToken);
-
+            
             var newCategoryFlowers = categories
                 .Select(c => CategoryFlower.New(c.Id, flower.Id))
                 .ToList();
 
             await categoryFlowerRepository.AddRangeAsync(newCategoryFlowers, cancellationToken);
+            await flowerRepository.UpdateAsync(flower, cancellationToken);
+            transaction.Commit();
 
-            return await flowerRepository.UpdateAsync(flower, cancellationToken);
+            return flower;
         }
         catch (Exception exception)
         {

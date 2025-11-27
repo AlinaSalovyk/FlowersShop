@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces.Repositories;
+﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces.Repositories;
 using Application.Orders.Exceptions;
 using Domain.Customers;
 using Domain.Flowers;
@@ -23,7 +24,8 @@ public record OrderItemDto
 public class CreateOrderCommandHandler(
     IOrderRepository orderRepository,
     ICustomerRepository customerRepository,
-    IFlowerRepository flowerRepository)
+    IFlowerRepository flowerRepository,
+    IApplicationDbContext dbContext) 
     : IRequestHandler<CreateOrderCommand, Either<OrderException, Order>>
 {
     public async Task<Either<OrderException, Order>> Handle(
@@ -36,72 +38,69 @@ public class CreateOrderCommandHandler(
         }
 
         var customerId = new CustomerId(request.CustomerId);
-        var customer = await customerRepository.GetByIdAsync(customerId, cancellationToken);
+        var customerOption = await customerRepository.GetByIdAsync(customerId, cancellationToken);
 
-        return await customer.MatchAsync(
-            c => CreateEntity(c.Id, request, cancellationToken),
+        return await customerOption.MatchAsync(
+            c => CreateOrderWithTransaction(c.Id, request, cancellationToken),
             () => Task.FromResult<Either<OrderException, Order>>(
                 new OrderCustomerNotFoundException(OrderId.Empty())));
     }
 
-    private async Task<Either<OrderException, Order>> CreateEntity(
+    private async Task<Either<OrderException, Order>> CreateOrderWithTransaction(
         CustomerId customerId,
         CreateOrderCommand request,
         CancellationToken cancellationToken)
     {
+
+        using var transaction = await dbContext.BeginTransactionAsync(cancellationToken);
+
         try
         {
+            var flowerIds = request.Items
+                .Select(i => new FlowerId(i.FlowerId))
+                .Distinct()
+                .ToList();
+
+            var flowers = await flowerRepository.GetByIdsAsync(flowerIds, cancellationToken);
+
+            var flowersMap = flowers.ToDictionary(f => f.Id);
+
+            if (flowers.Count != flowerIds.Count)
+            {
+                return new OrderFlowerNotFoundException(OrderId.Empty()); 
+            }
+
             var orderId = OrderId.New();
             var orderItems = new List<OrderItem>();
 
-            // Спочатку перевіряємо всі квіти та їх наявність
-            foreach (var item in request.Items)
+            foreach (var itemDto in request.Items)
             {
-                var flowerId = new FlowerId(item.FlowerId);
-                var flowerOption = await flowerRepository.GetByIdAsync(flowerId, cancellationToken);
-
-                if (flowerOption.IsNone)
-                {
-                    return new OrderFlowerNotFoundException(orderId);
-                }
-
-                var flower = flowerOption.Match(f => f, () => throw new InvalidOperationException());
-
-                // Перевіряємо наявність на складі
-                if (flower.StockQuantity < item.Quantity)
+                var flowerId = new FlowerId(itemDto.FlowerId);
+                var flower = flowersMap[flowerId];
+                
+                if (flower.StockQuantity < itemDto.Quantity)
                 {
                     return new InsufficientStockForOrderException(
-                        orderId, 
-                        flowerId.Value, 
-                        flower.Name, 
-                        item.Quantity, 
+                        orderId,
+                        flowerId.Value,
+                        flower.Name,
+                        itemDto.Quantity,
                         flower.StockQuantity);
                 }
-            }
 
-            // Якщо все ОК, створюємо замовлення та зменшуємо запаси
-            foreach (var item in request.Items)
-            {
-                var flowerId = new FlowerId(item.FlowerId);
-                var flowerOption = await flowerRepository.GetByIdAsync(flowerId, cancellationToken);
-                var flower = flowerOption.Match(f => f, () => throw new InvalidOperationException());
+                flower.DecreaseStock(itemDto.Quantity);
 
-                // Зменшуємо кількість на складі
-                flower.DecreaseStock(item.Quantity);
+                orderItems.Add(OrderItem.New(orderId, flowerId, itemDto.Quantity, flower.Price));
+                
                 await flowerRepository.UpdateAsync(flower, cancellationToken);
-
-                orderItems.Add(OrderItem.New(orderId, flowerId, item.Quantity, flower.Price));
             }
 
-            var order = await orderRepository.AddAsync(
-                Order.New(orderId, customerId, orderItems),
-                cancellationToken);
+            var order = Order.New(orderId, customerId, orderItems);
+            await orderRepository.AddAsync(order, cancellationToken);
+            
+            transaction.Commit();
 
             return order;
-        }
-        catch (InvalidOperationException ex)
-        {
-            return new UnhandledOrderException(OrderId.Empty(), ex);
         }
         catch (Exception exception)
         {

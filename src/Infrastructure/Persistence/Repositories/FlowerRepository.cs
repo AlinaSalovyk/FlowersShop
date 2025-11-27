@@ -27,6 +27,16 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
 
         return entity ?? Option<Flower>.None;
     }
+    
+    public async Task<IReadOnlyList<Flower>> GetByIdsAsync(IReadOnlyList<FlowerId> ids, CancellationToken cancellationToken)
+    {
+        return await _context.Flowers
+            .Include(x => x.Categories)!
+            .ThenInclude(x => x.Category)
+            .Include(x => x.Images)
+            .Where(x => ids.Contains(x.Id))
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<Option<Flower>> GetByNameAsync(string name, CancellationToken cancellationToken)
     {
