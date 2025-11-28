@@ -38,13 +38,15 @@ public class DeleteFlowerImageCommandHandler(
                     return await imageOption.MatchAsync(
                         async image =>
                         {
-                            // Видаляємо файл з файлової системи
+                            if (image.FlowerId != flower.Id)
+                            {
+                                return (Either<FlowerException, Flower>)new FlowerImageNotFoundException(flowerId, imageId);
+                            }
+
                             await fileStorage.DeleteAsync(image.GetFilePath(), cancellationToken);
                             
-                            // Видаляємо запис з бази даних
                             await flowerImageRepository.DeleteAsync(image, cancellationToken);
                             
-                            // Оновлюємо квітку
                             flower.RemoveImage(imageId);
                             await flowerRepository.UpdateAsync(flower, cancellationToken);
                             

@@ -22,15 +22,6 @@ public static class FlowersData
             50,
             []);
 
-    public static Flower ThirdTestFlower()
-        => Flower.New(
-            FlowerId.New(),
-            "Purple Orchid",
-            "Exotic purple orchid",
-            29.99m,
-            30,
-            []);
-
     public static FlowerImage FirstTestFlowerImage(FlowerId flowerId)
         => FlowerImage.New(flowerId, "test-image-1.jpg");
 

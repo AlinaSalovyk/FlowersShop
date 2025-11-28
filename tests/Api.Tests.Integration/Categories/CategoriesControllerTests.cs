@@ -115,6 +115,16 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task ShouldReturnCorrectContentType()
+    {
+        // Act
+        var response = await Client.GetAsync(BaseRoute);
+
+        // Assert
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+    }
+
     #endregion
 
     #region POST (Create) Tests
@@ -142,8 +152,6 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
         dbCategory.Name.Should().Be(_secondTestCategory.Name);
         dbCategory.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         dbCategory.UpdatedAt.Should().BeNull();
-
-        // Verify Location header
         response.Headers.Location.Should().NotBeNull();
         response.Headers.Location!.ToString().Should().Contain($"/api/categories/{categoryDto.Id}");
     }
@@ -159,8 +167,6 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-
-        // Verify database wasn't modified
         var categoriesCount = await Context.Categories.CountAsync();
         categoriesCount.Should().Be(1);
     }
@@ -233,7 +239,50 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
         var categoryDto = await response.ToResponseModel<CategoryDto>();
         categoryDto.Name.Should().Be(maxLengthName);
     }
-    
+
+    [Fact]
+    public async Task ShouldCreateCategoryWithSpecialCharacters()
+    {
+        // Arrange
+        var request = new CreateCategoryDto("Bouquets & Arrangements (Premium) - 50%");
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var categoryDto = await response.ToResponseModel<CategoryDto>();
+        categoryDto.Name.Should().Be("Bouquets & Arrangements (Premium) - 50%");
+    }
+
+    [Fact]
+    public async Task ShouldHandleCaseSensitivityForDuplicateNames()
+    {
+        // Arrange 
+        var request = new CreateCategoryDto(_firstTestCategory.Name.ToUpper());
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert 
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task ShouldCreateCategoryWithLeadingAndTrailingSpaces()
+    {
+        // Arrange
+        var nameWithSpaces = "  Test Category  ";
+        var request = new CreateCategoryDto(nameWithSpaces);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var categoryDto = await response.ToResponseModel<CategoryDto>();
+        categoryDto.Name.Should().Be(nameWithSpaces);
+    }
 
     #endregion
 
@@ -288,8 +337,6 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-        // Verify database wasn't modified
         var dbCategory = await Context.Categories.FirstAsync(x => x.Id.Equals(_firstTestCategory.Id));
         dbCategory.Name.Should().Be(_firstTestCategory.Name);
     }
@@ -349,7 +396,6 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
         var categoryDto = await response.ToResponseModel<CategoryDto>();
         categoryDto.Name.Should().Be(maxLengthName);
     }
-    
 
     [Fact]
     public async Task ShouldUpdateCategoryWithSameName()
@@ -378,6 +424,93 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task ShouldNotUpdateCategoryWithExistingName()
+    {
+        // Arrange
+        await Context.Categories.AddAsync(_secondTestCategory);
+        await SaveChangesAsync();
+        
+        var request = new UpdateCategoryDto(_secondTestCategory.Name);
+
+        // Act
+        var response = await Client.PutAsJsonAsync(_detailRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        
+        var dbCategory = await Context.Categories.FirstAsync(x => x.Id.Equals(_firstTestCategory.Id));
+        dbCategory.Name.Should().Be(_firstTestCategory.Name);
+    }
+
+    [Fact]
+    public async Task ShouldSetUpdatedAtWhenCategoryIsUpdated()
+    {
+        // Arrange
+        var originalCategory = await Context.Categories.AsNoTracking()
+            .FirstAsync(x => x.Id == _firstTestCategory.Id);
+        
+        await Task.Delay(100); // Невелика затримка для різниці в часі
+        
+        var request = new UpdateCategoryDto("New Name");
+        
+        // Act
+        await Client.PutAsJsonAsync(_detailRoute, request);
+        
+        // Assert
+        var dbCategory = await Context.Categories.AsNoTracking()
+            .FirstAsync(x => x.Id == _firstTestCategory.Id);
+        
+        dbCategory.UpdatedAt.Should().NotBeNull();
+        dbCategory.UpdatedAt.Should().BeAfter(originalCategory.CreatedAt);
+        dbCategory.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task ShouldHandleConcurrentUpdates()
+    {
+        // Arrange
+        var request1 = new UpdateCategoryDto("Name 1");
+        var request2 = new UpdateCategoryDto("Name 2");
+
+        // Act 
+        var task1 = Client.PutAsJsonAsync(_detailRoute, request1);
+        var task2 = Client.PutAsJsonAsync(_detailRoute, request2);
+        
+        var responses = await Task.WhenAll(task1, task2);
+
+        // Assert 
+        responses.Should().AllSatisfy(r => r.StatusCode.Should().Be(HttpStatusCode.OK));
+        
+        var dbCategory = await Context.Categories.AsNoTracking()
+            .FirstAsync(x => x.Id == _firstTestCategory.Id);
+        
+        dbCategory.Name.Should().BeOneOf("Name 1", "Name 2");
+    }
+
+    [Fact]
+    public async Task ShouldUpdateTimestampEvenWhenNameUnchanged()
+    {
+        // Arrange
+        var originalCategory = await Context.Categories.AsNoTracking()
+            .FirstAsync(x => x.Id == _firstTestCategory.Id);
+        
+        await Task.Delay(100);
+        
+        var request = new UpdateCategoryDto(_firstTestCategory.Name);
+
+        // Act
+        var response = await Client.PutAsJsonAsync(_detailRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var categoryDto = await response.ToResponseModel<CategoryDto>();
+        
+        categoryDto.UpdatedAt.Should().NotBeNull();
+        categoryDto.UpdatedAt.Should().BeAfter(originalCategory.CreatedAt);
     }
 
     #endregion
@@ -442,8 +575,7 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     #endregion
-
-    #region Initialization and Cleanup
+    
 
     public async Task InitializeAsync()
     {
@@ -457,5 +589,4 @@ public class CategoriesControllerTests : BaseIntegrationTest, IAsyncLifetime
         await SaveChangesAsync();
     }
 
-    #endregion
 }

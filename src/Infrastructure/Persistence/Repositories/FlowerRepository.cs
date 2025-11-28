@@ -7,18 +7,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
 
-public class FlowerRepository : IFlowerRepository, IFlowerQueries
+public class FlowerRepository(ApplicationDbContext context) : IFlowerRepository, IFlowerQueries
 {
-    private readonly ApplicationDbContext _context;
-
-    public FlowerRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
+    
     public async Task<Option<Flower>> GetByIdAsync(FlowerId id, CancellationToken cancellationToken)
     {
-        var entity = await _context.Flowers
+        var entity = await context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
             .Include(x => x.Images)
@@ -30,7 +24,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
     
     public async Task<IReadOnlyList<Flower>> GetByIdsAsync(IReadOnlyList<FlowerId> ids, CancellationToken cancellationToken)
     {
-        return await _context.Flowers
+        return await context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
             .Include(x => x.Images)
@@ -40,7 +34,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
 
     public async Task<Option<Flower>> GetByNameAsync(string name, CancellationToken cancellationToken)
     {
-        var entity = await _context.Flowers
+        var entity = await context.Flowers
             .Include(x => x.Images)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Name == name, cancellationToken);
@@ -50,28 +44,28 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
 
     public async Task<Flower> AddAsync(Flower entity, CancellationToken cancellationToken)
     {
-        await _context.Flowers.AddAsync(entity, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        await context.Flowers.AddAsync(entity, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<Flower> UpdateAsync(Flower entity, CancellationToken cancellationToken)
     {
-        _context.Flowers.Update(entity);
-        await _context.SaveChangesAsync(cancellationToken);
+        context.Flowers.Update(entity);
+        await context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<Flower> DeleteAsync(Flower entity, CancellationToken cancellationToken)
     {
-        _context.Flowers.Remove(entity);
-        await _context.SaveChangesAsync(cancellationToken);
+        context.Flowers.Remove(entity);
+        await context.SaveChangesAsync(cancellationToken);
         return entity;
     }
 
     public async Task<IReadOnlyList<Flower>> GetAllAsync(CancellationToken cancellationToken)
     {
-        return await _context.Flowers
+        return await context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
             .Include(x => x.Images)
@@ -83,7 +77,7 @@ public class FlowerRepository : IFlowerRepository, IFlowerQueries
     {
         var typedCategoryId = new CategoryId(categoryId);
 
-        return await _context.Flowers
+        return await context.Flowers
             .Include(x => x.Categories)!
             .ThenInclude(x => x.Category)
             .Include(x => x.Images)

@@ -88,19 +88,14 @@ public class FlowersController(
     [HttpPost("{flowerId:guid}/images")]
     public async Task<ActionResult<FlowerDto>> UploadImages(
         [FromRoute] Guid flowerId,
-        [FromForm] IFormFileCollection files,
+        [FromForm] IFormFileCollection? files,
         CancellationToken cancellationToken)
     {
-        if (files == null || files.Count == 0)
-        {
-            return BadRequest("No files provided");
-        }
-
-        var imageDtos = files.Select(file => new ImageFileDto
+        var imageDtos = files?.Select(file => new ImageFileDto
         {
             OriginalName = file.FileName,
             FileStream = file.OpenReadStream()
-        }).ToList();
+        }).ToList() ?? new List<ImageFileDto>(); 
 
         var command = new UploadFlowerImagesCommand
         {

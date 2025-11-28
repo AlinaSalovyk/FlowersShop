@@ -8,6 +8,7 @@ public class UploadFlowerImagesCommandValidator : AbstractValidator<UploadFlower
     {
         RuleFor(x => x.FlowerId).NotEmpty();
         RuleFor(x => x.Images).NotEmpty();
+        RuleFor(x => x.Images).NotEmpty().WithMessage("No files provided");
         RuleForEach(x => x.Images).ChildRules(image =>
         {
             image.RuleFor(x => x.OriginalName).NotEmpty();

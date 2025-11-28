@@ -12,7 +12,6 @@ using Tests.Data.Categories;
 using Tests.Data.Customers;
 using Tests.Data.Flowers;
 using Tests.Data.Orders;
-using Xunit;
 
 namespace Api.Tests.Integration.Orders;
 
@@ -28,10 +27,9 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
     private const string BaseRoute = "api/orders";
 
-    // 1. Додаємо поля для маршрутів
-    private readonly string _detailRoute;          // api/orders/{id}
-    private readonly string _statusRoute;          // api/orders/{id}/status
-    private readonly string _customerOrdersRoute;  // api/orders/customer/{customerId}
+    private readonly string _detailRoute;
+    private readonly string _statusRoute;
+    private readonly string _customerOrdersRoute;
 
     public OrdersControllerTests(IntegrationTestWebFactory factory) : base(factory)
     {
@@ -46,11 +44,12 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         _firstTestOrder = OrdersData.FirstTestOrder(_firstTestCustomer.Id, orderItems);
 
-        // 2. Ініціалізуємо маршрути один раз
         _detailRoute = $"{BaseRoute}/{_firstTestOrder.Id.Value}";
         _statusRoute = $"{BaseRoute}/{_firstTestOrder.Id.Value}/status";
         _customerOrdersRoute = $"{BaseRoute}/customer/{_firstTestCustomer.Id.Value}";
     }
+
+    #region GET Tests
 
     [Fact]
     public async Task ShouldGetAllOrders()
@@ -63,13 +62,29 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         var orders = await response.ToResponseModel<List<OrderDto>>();
         orders.Should().HaveCount(1);
         orders.First().CustomerId.Should().Be(_firstTestCustomer.Id.Value);
+        orders.First().TotalAmount.Should().Be(_firstTestFlower.Price * 2);
+        orders.First().Status.Should().Be(OrderStatus.Pending.ToString());
+    }
+
+    [Fact]
+    public async Task ShouldGetEmptyListWhenNoOrders()
+    {
+        // Arrange
+        await ClearDatabaseAsync();
+
+        // Act
+        var response = await Client.GetAsync(BaseRoute);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await response.ToResponseModel<List<OrderDto>>();
+        orders.Should().BeEmpty();
     }
 
     [Fact]
     public async Task ShouldGetOrderById()
     {
         // Act
-        // 3. Використовуємо _detailRoute
         var response = await Client.GetAsync(_detailRoute);
 
         // Assert
@@ -79,6 +94,8 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         orderDto.CustomerId.Should().Be(_firstTestCustomer.Id.Value);
         orderDto.Status.Should().Be(OrderStatus.Pending.ToString());
         orderDto.Items.Should().HaveCount(1);
+        orderDto.Items.First().Quantity.Should().Be(2);
+        orderDto.Items.First().FlowerId.Should().Be(_firstTestFlower.Id.Value);
     }
 
     [Fact]
@@ -99,7 +116,6 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     public async Task ShouldGetOrdersByCustomer()
     {
         // Act
-        // 3. Використовуємо _customerOrdersRoute
         var response = await Client.GetAsync(_customerOrdersRoute);
 
         // Assert
@@ -108,6 +124,40 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         orders.Should().HaveCount(1);
         orders.First().CustomerId.Should().Be(_firstTestCustomer.Id.Value);
     }
+
+    [Fact]
+    public async Task ShouldGetEmptyListForCustomerWithoutOrders()
+    {
+        // Arrange
+        var emptyCustomerRoute = $"{BaseRoute}/customer/{_secondTestCustomer.Id.Value}";
+
+        // Act
+        var response = await Client.GetAsync(emptyCustomerRoute);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await response.ToResponseModel<List<OrderDto>>();
+        orders.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ShouldGetEmptyListForNonExistentCustomer()
+    {
+        // Arrange
+        var nonExistentCustomerRoute = $"{BaseRoute}/customer/{Guid.NewGuid()}";
+
+        // Act
+        var response = await Client.GetAsync(nonExistentCustomerRoute);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var orders = await response.ToResponseModel<List<OrderDto>>();
+        orders.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region POST (Create) Tests
 
     [Fact]
     public async Task ShouldCreateOrder()
@@ -133,6 +183,7 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         var dbOrder = await Context.Orders
             .Include(o => o.Items)
+            .AsNoTracking()
             .FirstAsync(x => x.Id.Equals(orderId));
 
         dbOrder.CustomerId.Should().Be(_firstTestCustomer.Id);
@@ -140,10 +191,39 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         dbOrder.Items.Should().HaveCount(1);
         dbOrder.Items!.First().Quantity.Should().Be(3);
         dbOrder.TotalAmount.Should().Be(_secondTestFlower.Price * 3);
-
-        // Verify stock was decreased
-        var dbFlower = await Context.Flowers.FirstAsync(f => f.Id.Equals(_secondTestFlower.Id));
+        
+        var dbFlower = await Context.Flowers.AsNoTracking().FirstAsync(f => f.Id.Equals(_secondTestFlower.Id));
         dbFlower.StockQuantity.Should().Be(_secondTestFlower.StockQuantity - 3);
+    }
+
+    [Fact]
+    public async Task ShouldCreateOrderWithMultipleItems()
+    {
+        // Arrange
+        var request = new CreateOrderDto(
+            CustomerId: _firstTestCustomer.Id.Value,
+            Items:
+            [
+                new CreateOrderItemDto(FlowerId: _firstTestFlower.Id.Value, Quantity: 2),
+                new CreateOrderItemDto(FlowerId: _secondTestFlower.Id.Value, Quantity: 3)
+            ]);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var orderDto = await response.ToResponseModel<OrderDto>();
+        var orderId = new OrderId(orderDto.Id);
+
+        var dbOrder = await Context.Orders
+            .Include(o => o.Items)
+            .AsNoTracking()
+            .FirstAsync(x => x.Id.Equals(orderId));
+
+        dbOrder.Items.Should().HaveCount(2);
+        dbOrder.TotalAmount.Should().Be((_firstTestFlower.Price * 2) + (_secondTestFlower.Price * 3));
     }
 
     [Fact]
@@ -205,13 +285,14 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     public async Task ShouldNotCreateOrderWithInsufficientStock()
     {
         // Arrange
+        var initialStock = _firstTestFlower.StockQuantity;
         var request = new CreateOrderDto(
             CustomerId: _firstTestCustomer.Id.Value,
             Items:
             [
                 new CreateOrderItemDto(
                     FlowerId: _firstTestFlower.Id.Value,
-                    Quantity: _firstTestFlower.StockQuantity + 10) // More than available
+                    Quantity: initialStock + 10)
             ]);
 
         // Act
@@ -219,10 +300,8 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-        // Verify stock was not changed
         var dbFlower = await Context.Flowers.AsNoTracking().FirstAsync(f => f.Id.Equals(_firstTestFlower.Id));
-        dbFlower.StockQuantity.Should().Be(_firstTestFlower.StockQuantity);
+        dbFlower.StockQuantity.Should().Be(initialStock);
     }
 
     [Fact]
@@ -235,7 +314,7 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
             [
                 new CreateOrderItemDto(
                     FlowerId: _firstTestFlower.Id.Value,
-                    Quantity: 0) // Invalid quantity
+                    Quantity: 0)
             ]);
 
         // Act
@@ -246,13 +325,76 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     [Fact]
+    public async Task ShouldNotCreateOrderWithNegativeQuantity()
+    {
+        // Arrange
+        var request = new CreateOrderDto(
+            CustomerId: _firstTestCustomer.Id.Value,
+            Items:
+            [
+                new CreateOrderItemDto(
+                    FlowerId: _firstTestFlower.Id.Value,
+                    Quantity: -5)
+            ]);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ShouldNotCreateOrderWithEmptyCustomerId()
+    {
+        // Arrange
+        var request = new CreateOrderDto(
+            CustomerId: Guid.Empty,
+            Items:
+            [
+                new CreateOrderItemDto(
+                    FlowerId: _firstTestFlower.Id.Value,
+                    Quantity: 1)
+            ]);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ShouldNotCreateOrderWithEmptyFlowerId()
+    {
+        // Arrange
+        var request = new CreateOrderDto(
+            CustomerId: _firstTestCustomer.Id.Value,
+            Items:
+            [
+                new CreateOrderItemDto(
+                    FlowerId: Guid.Empty,
+                    Quantity: 1)
+            ]);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    #endregion
+
+    #region PATCH (UpdateStatus) Tests
+
+    [Fact]
     public async Task ShouldUpdateOrderStatus()
     {
         // Arrange
         var request = new UpdateOrderStatusDto(Status: OrderStatus.Confirmed.ToString());
 
         // Act
-        // 3. Використовуємо _statusRoute
         var response = await Client.PatchAsync(_statusRoute, JsonContent.Create(request));
 
         // Assert
@@ -262,9 +404,41 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         orderDto.Status.Should().Be(OrderStatus.Confirmed.ToString());
         orderDto.UpdatedAt.Should().NotBeNull();
 
-        var dbOrder = await Context.Orders.FirstAsync(x => x.Id.Equals(_firstTestOrder.Id));
+        var dbOrder = await Context.Orders.AsNoTracking().FirstAsync(x => x.Id.Equals(_firstTestOrder.Id));
         dbOrder.Status.Should().Be(OrderStatus.Confirmed);
         dbOrder.UpdatedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ShouldUpdateOrderStatusToDelivered()
+    {
+        // Arrange
+        var request = new UpdateOrderStatusDto(Status: OrderStatus.Delivered.ToString());
+
+        // Act
+        var response = await Client.PatchAsync(_statusRoute, JsonContent.Create(request));
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+
+        var orderDto = await response.ToResponseModel<OrderDto>();
+        orderDto.Status.Should().Be(OrderStatus.Delivered.ToString());
+    }
+
+    [Fact]
+    public async Task ShouldUpdateOrderStatusToCancelled()
+    {
+        // Arrange
+        var request = new UpdateOrderStatusDto(Status: OrderStatus.Cancelled.ToString());
+
+        // Act
+        var response = await Client.PatchAsync(_statusRoute, JsonContent.Create(request));
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+
+        var orderDto = await response.ToResponseModel<OrderDto>();
+        orderDto.Status.Should().Be(OrderStatus.Cancelled.ToString());
     }
 
     [Fact]
@@ -274,7 +448,6 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         var request = new UpdateOrderStatusDto(Status: "InvalidStatus");
 
         // Act
-        // 3. Використовуємо _statusRoute
         var response = await Client.PatchAsync(_statusRoute, JsonContent.Create(request));
 
         // Assert
@@ -297,10 +470,26 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     [Fact]
+    public async Task ShouldNotUpdateStatusWithEmptyStatus()
+    {
+        // Arrange
+        var request = new UpdateOrderStatusDto(Status: "");
+
+        // Act
+        var response = await Client.PatchAsync(_statusRoute, JsonContent.Create(request));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    #endregion
+
+    #region DELETE Tests
+
+    [Fact]
     public async Task ShouldDeleteOrder()
     {
         // Act
-        // 3. Використовуємо _detailRoute
         var response = await Client.DeleteAsync(_detailRoute);
 
         // Assert
@@ -311,6 +500,21 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         var dbOrder = await Context.Orders.FirstOrDefaultAsync(x => x.Id.Equals(_firstTestOrder.Id));
         dbOrder.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ShouldDeleteOrderAndItsItems()
+    {
+        // Act
+        var response = await Client.DeleteAsync(_detailRoute);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+
+        var dbOrderItems = await Context.Set<OrderItem>()
+            .Where(x => x.OrderId.Equals(_firstTestOrder.Id))
+            .ToListAsync();
+        dbOrderItems.Should().BeEmpty();
     }
 
     [Fact]
@@ -328,14 +532,32 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     [Fact]
+    public async Task ShouldNotDeleteOrderWithEmptyId()
+    {
+        // Arrange
+        var route = $"{BaseRoute}/{Guid.Empty}";
+
+        // Act
+        var response = await Client.DeleteAsync(route);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    #endregion
+
+    #region Reports Tests
+
+    [Fact]
     public async Task ShouldGetSalesReport()
     {
         // Arrange
-        // Update order status to Delivered so it's included in the report
         var order = await Context.Orders.FirstAsync(o => o.Id == _firstTestOrder.Id);
-        order.UpdateStatus(OrderStatus.Delivered);
-        await Context.SaveChangesAsync();
 
+        Context.Entry(order).Property(x => x.Status).CurrentValue = OrderStatus.Delivered;
+        Context.Entry(order).Property(x => x.CreatedAt).CurrentValue = DateTime.UtcNow.AddDays(-1); 
+        await Context.SaveChangesAsync(); 
+        Context.ChangeTracker.Clear();
         var startDate = DateTime.UtcNow.AddDays(-7);
         var endDate = DateTime.UtcNow.AddDays(1);
         var route = $"{BaseRoute}/reports/sales?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}";
@@ -346,12 +568,66 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var report = await response.ToResponseModel<SalesReportDto>();
-        report.TotalOrders.Should().Be(1);
+        report.Should().NotBeNull();
+        report.TotalOrders.Should().Be(1); 
         report.TotalRevenue.Should().BeGreaterThan(0);
         report.TotalItemsSold.Should().Be(2);
         report.TopFlowers.Should().NotBeEmpty();
         report.DailySales.Should().NotBeEmpty();
     }
+
+    [Fact]
+    public async Task ShouldGetEmptySalesReportForDateRangeWithoutOrders()
+    {
+        // Arrange
+        var startDate = DateTime.UtcNow.AddYears(-10);
+        var endDate = DateTime.UtcNow.AddYears(-9);
+        var route = $"{BaseRoute}/reports/sales?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}";
+
+        // Act
+        var response = await Client.GetAsync(route);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var report = await response.ToResponseModel<SalesReportDto>();
+        report.TotalOrders.Should().Be(0);
+        report.TotalRevenue.Should().Be(0);
+        report.TotalItemsSold.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ShouldNotIncludePendingOrdersInSalesReport()
+    {
+        // Arrange 
+        var startDate = DateTime.UtcNow.AddDays(-7);
+        var endDate = DateTime.UtcNow.AddDays(1);
+        var route = $"{BaseRoute}/reports/sales?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}";
+
+        // Act
+        var response = await Client.GetAsync(route);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var report = await response.ToResponseModel<SalesReportDto>();
+        report.TotalOrders.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ShouldNotGetSalesReportWithInvalidDateRange()
+    {
+        // Arrange
+        var startDate = DateTime.UtcNow.AddDays(1);
+        var endDate = DateTime.UtcNow.AddDays(-1);
+        var route = $"{BaseRoute}/reports/sales?startDate={startDate:yyyy-MM-dd}&endDate={endDate:yyyy-MM-dd}";
+
+        // Act
+        var response = await Client.GetAsync(route);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    #endregion
 
     public async Task InitializeAsync()
     {
@@ -366,6 +642,7 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
         await Context.Flowers.AddAsync(_secondTestFlower);
         await Context.Orders.AddAsync(_firstTestOrder);
         await SaveChangesAsync();
+        Context.ChangeTracker.Clear();
     }
 
     public async Task DisposeAsync()
@@ -377,13 +654,13 @@ public class OrdersControllerTests : BaseIntegrationTest, IAsyncLifetime
     {
         var orders = await Context.Orders.Include(o => o.Items).ToListAsync();
         Context.Orders.RemoveRange(orders);
-        await SaveChangesAsync(); 
-    
+        await SaveChangesAsync();
+
         Context.Flowers.RemoveRange(Context.Flowers);
         Context.Customers.RemoveRange(Context.Customers);
         Context.Categories.RemoveRange(Context.Categories);
-    
+
         await SaveChangesAsync();
         Context.ChangeTracker.Clear();
-    } 
+    }
 }

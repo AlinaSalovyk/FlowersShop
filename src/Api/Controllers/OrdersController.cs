@@ -50,7 +50,7 @@ public class OrdersController(
         [FromBody] CreateOrderDto request,
         CancellationToken cancellationToken)
     {
-        var command = new Application.Orders.Commands.CreateOrderCommand
+        var command = new CreateOrderCommand
         {
             CustomerId = request.CustomerId,
             Items = request.Items.Select(i => new Application.Orders.Commands.OrderItemDto
@@ -73,15 +73,10 @@ public class OrdersController(
         [FromBody] UpdateOrderStatusDto request,
         CancellationToken cancellationToken)
     {
-        if (!Enum.TryParse<OrderStatus>(request.Status, true, out var status))
-        {
-            return BadRequest("Invalid order status");
-        }
-
         var command = new UpdateOrderStatusCommand
         {
             OrderId = id,
-            Status = status
+            Status = Enum.Parse<OrderStatus>(request.Status, true)
         };
 
         var result = await sender.Send(command, cancellationToken);

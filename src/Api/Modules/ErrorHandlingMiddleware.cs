@@ -28,7 +28,7 @@ public class ErrorHandlingMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         HttpStatusCode code = HttpStatusCode.InternalServerError;
-        object errors = null;
+        object? errors = null;
 
         if (exception is ValidationException validationException)
         {

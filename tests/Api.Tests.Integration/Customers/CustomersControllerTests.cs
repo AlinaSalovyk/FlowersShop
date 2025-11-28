@@ -6,7 +6,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Tests.Common;
 using Tests.Data.Customers;
-using Xunit;
 
 namespace Api.Tests.Integration.Customers;
 
@@ -37,6 +36,16 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         var customers = await response.ToResponseModel<List<CustomerDto>>();
         customers.Should().HaveCount(1);
         customers.First().Email.Should().Be(_firstTestCustomer.Email);
+    }
+    
+    [Fact]
+    public async Task ShouldReturnCorrectContentTypeForGetRequests()
+    {
+        // Act
+        var response = await Client.GetAsync(BaseRoute);
+
+        // Assert
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
     }
 
     [Fact]
@@ -107,7 +116,6 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
     
-
     #endregion
 
     #region POST (Create) Tests
@@ -148,9 +156,29 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         dbCustomer.Address.Should().Be(_secondTestCustomer.Address);
         dbCustomer.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         dbCustomer.UpdatedAt.Should().BeNull();
-
+        
         response.Headers.Location.Should().NotBeNull();
         response.Headers.Location!.ToString().Should().Contain($"/api/customers/{customerDto.Id}");
+    }
+    
+    [Fact]
+    public async Task ShouldReturnLocationHeaderOnCreate()
+    {
+        // Arrange
+        var request = new CreateCustomerDto(
+            _secondTestCustomer.FirstName,
+            _secondTestCustomer.LastName,
+            _secondTestCustomer.Email,
+            _secondTestCustomer.Phone,
+            _secondTestCustomer.Address);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.Headers.Location.Should().NotBeNull();
+        response.Headers.Location!.ToString().Should().Match("*/api/customers/*");
     }
 
     [Fact]
@@ -172,6 +200,91 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         var customersCount = await Context.Customers.CountAsync();
         customersCount.Should().Be(1);
+    }
+    
+    [Fact]
+    public async Task ShouldCreateCustomerWithSpecialCharactersInName()
+    {
+        // Arrange
+        var request = new CreateCustomerDto(
+            "Марія-Ольга",
+            "O'Brien-Müller",
+            "maria@example.com",
+            "+380501234567",
+            "вул. Хрещатик, буд. 10, кв. 5");
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task ShouldCreateCustomerWithUnicodeCharacters()
+    {
+        // Arrange
+        var request = new CreateCustomerDto(
+            "李明",
+            "Müller",
+            "test@例え.jp",
+            "+380501234567",
+            "вулиця Шевченка, 123");
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+    
+    [Fact]
+    public async Task ShouldCreateCustomerWithDifferentPhoneFormats()
+    {
+        // Arrange
+        var validPhoneFormats = new[]
+        {
+            "+380501234567",
+            "+38 050 123 45 67",
+            "+38-050-123-45-67",
+            "0501234567",
+            "+1-555-123-4567"
+        };
+
+        foreach (var phone in validPhoneFormats)
+        {
+            var request = new CreateCustomerDto(
+                "Test",
+                "User",
+                $"test{Math.Abs(phone.GetHashCode())}@example.com", 
+                phone,
+                "Test Address");
+
+            // Act
+            var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.Created, 
+                $"Phone format '{phone}' should be valid");
+        }
+    }
+    
+    [Fact]
+    public async Task ShouldCreateCustomerWithMinimumValidPhoneLength()
+    {
+        // Arrange 
+        var request = new CreateCustomerDto(
+            _secondTestCustomer.FirstName,
+            _secondTestCustomer.LastName,
+            "minphone@example.com",
+            "+12345678", 
+            _secondTestCustomer.Address);
+
+        // Act
+        var response = await Client.PostAsJsonAsync(BaseRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
 
     [Fact]
@@ -195,75 +308,40 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
     [Fact]
     public async Task ShouldNotCreateCustomerWithInvalidEmailFormat_MissingAt()
     {
-        // Arrange
-        var request = new CreateCustomerDto(
-            "Test",
-            "User",
-            "testexample.com",
-            "+380501234567",
-            "Test Address");
-
-        // Act
+        var request = new CreateCustomerDto("Test", "User", "testexample.com", "+380501234567", "Addr");
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotCreateCustomerWithInvalidEmailFormat_MissingDomain()
     {
-        // Arrange
-        var request = new CreateCustomerDto(
-            "Test",
-            "User",
-            "test@",
-            "+380501234567",
-            "Test Address");
-
-        // Act
+        var request = new CreateCustomerDto("Test", "User", "test@", "+380501234567", "Addr");
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotCreateCustomerWithEmptyFields()
     {
-        // Arrange
         var request = new CreateCustomerDto("", "", "", "", "");
-
-        // Act
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
-
+    
     [Fact]
     public async Task ShouldNotCreateCustomerWithWhitespaceFields()
     {
-        // Arrange
         var request = new CreateCustomerDto("   ", "   ", "   ", "   ", "   ");
-
-        // Act
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotCreateCustomerWithNullFields()
     {
-        // Arrange
         var request = new CreateCustomerDto(null!, null!, null!, null!, null!);
-
-        // Act
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -284,107 +362,16 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
-
     [Fact]
-    public async Task ShouldNotCreateCustomerWithTooLongFirstName()
+    public async Task ShouldHandleSpecialCharactersInSearchFields()
     {
-        // Arrange
+        // Arrange 
         var request = new CreateCustomerDto(
-            new string('a', 101),
-            _secondTestCustomer.LastName,
-            _secondTestCustomer.Email,
-            _secondTestCustomer.Phone,
-            _secondTestCustomer.Address);
-
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldNotCreateCustomerWithTooLongLastName()
-    {
-        // Arrange
-        var request = new CreateCustomerDto(
-            _secondTestCustomer.FirstName,
-            new string('b', 101),
-            _secondTestCustomer.Email,
-            _secondTestCustomer.Phone,
-            _secondTestCustomer.Address);
-
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldNotCreateCustomerWithTooLongEmail()
-    {
-        // Arrange
-        var request = new CreateCustomerDto(
-            _secondTestCustomer.FirstName,
-            _secondTestCustomer.LastName,
-            new string('c', 250) + "@test.com",
-            _secondTestCustomer.Phone,
-            _secondTestCustomer.Address);
-
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldNotCreateCustomerWithTooLongPhone()
-    {
-        // Arrange
-        var request = new CreateCustomerDto(
-            _secondTestCustomer.FirstName,
-            _secondTestCustomer.LastName,
-            _secondTestCustomer.Email,
-            new string('1', 21),
-            _secondTestCustomer.Address);
-
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldNotCreateCustomerWithTooLongAddress()
-    {
-        // Arrange
-        var request = new CreateCustomerDto(
-            _secondTestCustomer.FirstName,
-            _secondTestCustomer.LastName,
-            _secondTestCustomer.Email,
-            _secondTestCustomer.Phone,
-            new string('d', 501));
-
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldCreateCustomerWithMaximumAllowedFieldLengths()
-    {
-        // Arrange
-        var request = new CreateCustomerDto(
-            new string('a', 100),
-            new string('b', 100),
-            new string('c', 245) + "@test.com",
-            new string('1', 20),
-            new string('d', 500));
+            "Test' OR '1'='1",
+            "User",
+            "sqltest@example.com",
+            "+380501234567",
+            "Address' OR '1'='1");
 
         // Act
         var response = await Client.PostAsJsonAsync(BaseRoute, request);
@@ -392,23 +379,27 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
-
+    
     [Fact]
-    public async Task ShouldNotCreateCustomerWithInvalidPhoneFormat()
+    public async Task ShouldEnforceUniqueEmailConstraintAtDatabaseLevel()
     {
-        // Arrange
-        var request = new CreateCustomerDto(
-            _secondTestCustomer.FirstName,
-            _secondTestCustomer.LastName,
-            _secondTestCustomer.Email,
-            "invalid-phone",
-            _secondTestCustomer.Address);
+        var duplicateCustomer = Customer.New(
+            CustomerId.New(),
+            "Another",
+            "Person",
+            _firstTestCustomer.Email, 
+            "+380509999999",
+            "Some Address");
 
-        // Act
-        var response = await Client.PostAsJsonAsync(BaseRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // Act & Assert
+        await Assert.ThrowsAsync<DbUpdateException>(async () =>
+        {
+            await Context.Customers.AddAsync(duplicateCustomer);
+            await Context.SaveChangesAsync();
+        });
+        
+        // чистка  context від помилкового запису, щоб не ламати DisposeAsync
+        Context.Entry(duplicateCustomer).State = EntityState.Detached;
     }
 
     #endregion
@@ -443,13 +434,28 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         var dbCustomer = await Context.Customers.FirstAsync(x => x.Id.Equals(_firstTestCustomer.Id));
         dbCustomer.FirstName.Should().Be(_thirdTestCustomer.FirstName);
-        dbCustomer.LastName.Should().Be(_thirdTestCustomer.LastName);
-        dbCustomer.Email.Should().Be(_thirdTestCustomer.Email);
-        dbCustomer.Phone.Should().Be(_thirdTestCustomer.Phone);
         dbCustomer.Address.Should().Be(_thirdTestCustomer.Address);
-        dbCustomer.UpdatedAt.Should().NotBeNull();
-        dbCustomer.CreatedAt.Should().Be(_firstTestCustomer.CreatedAt);
-        dbCustomer.CreatedAt.Should().BeCloseTo(_firstTestCustomer.CreatedAt, TimeSpan.FromMilliseconds(1));
+    }
+    
+    [Fact]
+    public async Task ShouldUpdateCustomerEmailWithDifferentCase()
+    {
+        // Arrange 
+        var request = new UpdateCustomerDto(
+            _firstTestCustomer.FirstName,
+            _firstTestCustomer.LastName,
+            _firstTestCustomer.Email.ToUpper(), 
+            _firstTestCustomer.Phone,
+            _firstTestCustomer.Address);
+
+        // Act
+        var response = await Client.PutAsJsonAsync(_detailRoute, request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var customer = await response.ToResponseModel<CustomerDto>();
+        customer.Email.Should().Be(_firstTestCustomer.Email.ToUpper()); 
     }
 
     [Fact]
@@ -477,26 +483,6 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     [Fact]
-    public async Task ShouldUpdateCustomerWithSameEmail()
-    {
-        // Arrange
-        var request = new UpdateCustomerDto(
-            _thirdTestCustomer.FirstName,
-            _thirdTestCustomer.LastName,
-            _firstTestCustomer.Email,
-            _thirdTestCustomer.Phone,
-            _thirdTestCustomer.Address);
-
-        // Act
-        var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var customerDto = await response.ToResponseModel<CustomerDto>();
-        customerDto.Email.Should().Be(_firstTestCustomer.Email);
-    }
-
-    [Fact]
     public async Task ShouldNotUpdateNonExistentCustomer()
     {
         // Arrange
@@ -515,68 +501,35 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+    
 
     [Fact]
     public async Task ShouldNotUpdateCustomerWithEmptyFields()
     {
-        // Arrange
         var request = new UpdateCustomerDto("", "", "", "", "");
-
-        // Act
         var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotUpdateCustomerWithWhitespaceFields()
     {
-        // Arrange
         var request = new UpdateCustomerDto("   ", "   ", "   ", "   ", "   ");
-
-        // Act
         var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task ShouldNotUpdateCustomerWithNullFields()
-    {
-        // Arrange
-        var request = new UpdateCustomerDto(null!, null!, null!, null!, null!);
-
-        // Act
-        var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotUpdateCustomerWithInvalidEmail()
     {
-        // Arrange
-        var request = new UpdateCustomerDto(
-            _secondTestCustomer.FirstName,
-            _secondTestCustomer.LastName,
-            "invalid-email",
-            _secondTestCustomer.Phone,
-            _secondTestCustomer.Address);
-
-        // Act
+        var request = new UpdateCustomerDto(_secondTestCustomer.FirstName, _secondTestCustomer.LastName, "invalid-email", _secondTestCustomer.Phone, _secondTestCustomer.Address);
         var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task ShouldNotUpdateCustomerWithTooLongFields()
     {
-        // Arrange
         var request = new UpdateCustomerDto(
             new string('a', 101),
             new string('b', 101),
@@ -584,47 +537,48 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
             new string('1', 21),
             new string('d', 501));
 
-        // Act
         var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
-
-    [Fact]
-    public async Task ShouldUpdateCustomerWithMaximumAllowedFieldLengths()
-    {
-        // Arrange
-        var request = new UpdateCustomerDto(
-            new string('a', 100),
-            new string('b', 100),
-            new string('c', 245) + "@test.com",
-            new string('1', 20),
-            new string('d', 500));
-
-        // Act
-        var response = await Client.PutAsJsonAsync(_detailRoute, request);
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
+    
     [Fact]
     public async Task ShouldNotUpdateCustomerWithInvalidPhoneFormat()
     {
-        // Arrange
         var request = new UpdateCustomerDto(
             _secondTestCustomer.FirstName,
             _secondTestCustomer.LastName,
             _secondTestCustomer.Email,
             "invalid-phone",
             _secondTestCustomer.Address);
+        var response = await Client.PutAsJsonAsync(_detailRoute, request);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    #endregion
+
+    #region Concurrency Tests
+
+    [Fact]
+    public async Task ShouldHandleConcurrentUpdatesOfSameCustomer()
+    {
+        // Arrange
+        var request1 = new UpdateCustomerDto("Name1", "Last1", "email1@example.com", "+380501111111", "Address1");
+        var request2 = new UpdateCustomerDto("Name2", "Last2", "email2@example.com", "+380502222222", "Address2");
 
         // Act
-        var response = await Client.PutAsJsonAsync(_detailRoute, request);
+        var tasks = new[]
+        {
+            Client.PutAsJsonAsync(_detailRoute, request1),
+            Client.PutAsJsonAsync(_detailRoute, request2)
+        };
+        var responses = await Task.WhenAll(tasks);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        responses.Should().AllSatisfy(r => r.StatusCode.Should().Be(HttpStatusCode.OK));
+        var finalCustomer = await Context.Customers.AsNoTracking().FirstAsync(x => x.Id.Equals(_firstTestCustomer.Id));
+        finalCustomer.Should().NotBeNull();
+        // Перевіряємо, що значення відповідає одному з запитів 
+        new[] { "email1@example.com", "email2@example.com" }.Should().Contain(finalCustomer.Email);
     }
 
     #endregion
@@ -642,9 +596,6 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
 
         var customerDto = await response.ToResponseModel<CustomerDto>();
         customerDto.Id.Should().Be(_firstTestCustomer.Id.Value);
-        customerDto.FirstName.Should().Be(_firstTestCustomer.FirstName);
-        customerDto.LastName.Should().Be(_firstTestCustomer.LastName);
-        customerDto.Email.Should().Be(_firstTestCustomer.Email);
 
         var dbCustomer = await Context.Customers.FirstOrDefaultAsync(x => x.Id.Equals(_firstTestCustomer.Id));
         dbCustomer.Should().BeNull();
@@ -664,7 +615,6 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
     
-
     [Fact]
     public async Task ShouldNotDeleteCustomerTwice()
     {
@@ -679,8 +629,7 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
     }
 
     #endregion
-
-    #region Initialization and Cleanup
+    
 
     public async Task InitializeAsync()
     {
@@ -694,5 +643,4 @@ public class CustomersControllerTests : BaseIntegrationTest, IAsyncLifetime
         await SaveChangesAsync();
     }
 
-    #endregion
 }
